@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "API de RepuSense (Express + PostgreSQL)",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "node --test test/*.test.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:up": "node scripts/migrate.js up",
+    "migrate:down": "node scripts/migrate.js down",
+    "migrate:redo": "node scripts/migrate.js redo",
+    "migrate:status": "node scripts/migrate.js status",
+    "migrate:create": "node scripts/migrate.js create"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "node-pg-migrate": "^9.0.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

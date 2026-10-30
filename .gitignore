@@ -4,4 +4,11 @@
 !.env.example
 
 # Dependencias
-node_modules/
+node_modules
+
+# Builds y cobertura
+dist
+coverage
+
+# Sistema
+.DS_Store
