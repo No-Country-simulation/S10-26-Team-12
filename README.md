@@ -2,8 +2,6 @@
 
 RepuSense es una herramienta interna de prospección comercial para agencias de marketing digital y relaciones públicas. Busca identificar negocios con señales de problemas de reputación online, organizar sus datos y facilitar que el equipo comercial prepare contactos relevantes.
 
-> **Estado del proyecto:** MVP en definición y desarrollo. La documentación se completa de manera incremental durante las semanas de trabajo.
-
 ## Tabla de contenidos
 
 - [Descripción](#descripción)
@@ -87,25 +85,28 @@ Entregables previstos:
 
 ## Stack tecnológico
 
-Stack de primera opción registrado en la bitácora de la semana 1:
-- **Extracción / Data:** Node.js, Puppeteer y Crawlee.
-- **Backend:** Express o NestJS sobre Node.js (elección pendiente).
-- **Frontend:** React y TypeScript.
-- **Base de datos:** PostgreSQL.
-- **IA:** opción por evaluar entre OpenAI API, Anthropic o modelos locales mediante Ollama/LangChain.
+Stack implementado:
+- **Backend:** Node.js + Express 5 (JavaScript).
+- **Frontend:** React 19 + Vite (JavaScript).
+- **Base de datos:** PostgreSQL 18.
+- **Migraciones:** `node-pg-migrate` con archivos SQL versionados.
+- **Infraestructura:** Docker Compose.
+- **Tests backend:** `node:test`.
+- **Extracción / Data:** pendiente (Puppeteer/Crawlee a evaluar según la fuente).
+- **IA:** pendiente de selección entre OpenAI API, Anthropic o modelo local.
 
-Este stack es una primera propuesta, no implica que todas las decisiones estén cerradas. Ver `docs/stack.md`.
+El detalle y las decisiones pendientes están en `docs/stack.md`.
 
 ## Arquitectura
 
-La arquitectura detallada está pendiente. La propuesta inicial separa:
-1. Interfaz web para búsqueda, filtros y revisión de prospectos.
-2. API backend para orquestar búsquedas y entregar datos al frontend.
-3. Módulo de extracción y normalización de datos.
-4. PostgreSQL para persistir negocios, reseñas/resúmenes y seguimiento comercial.
-5. Servicio de IA para clasificar problemas y redactar borradores.
+La base técnica ya está implementada y corre en Docker Compose:
+1. **Frontend React/Vite** (`:5173`) que consume la API.
+2. **API Express** (`:5000`) con `GET /api/health`.
+3. **PostgreSQL 18** (`:5432`) con volumen persistente.
+4. **Servicio `migrate`** que aplica las migraciones pendientes antes del backend y también se usa para crear o gestionar migraciones manualmente.
+5. **Health check** que verifica API + base de datos (`200` si todo responde, `503` si la DB falla).
 
-Ver `docs/arquitectura.md`.
+Los módulos de extracción, negocio e IA están pendientes. Ver `docs/arquitectura.md`.
 
 ## Contrato de datos
 
@@ -115,9 +116,38 @@ Ver `docs/contrato-datos.md`.
 
 ## Cómo correr el proyecto
 
-**Pendiente:** todavía deben definirse los comandos reales de instalación y ejecución, las variables de entorno y la configuración de la base de datos. No ejecutar comandos de ejemplo como si fueran definitivos.
+**Requisitos:** Docker y Docker Compose v2.
+```bash
+cp .env.example .env   # Hay valores por defecto
+docker compose up --build
+```
 
-Ver `docs/como-correr.md`.
+- Frontend: http://localhost:5173
+- API: http://localhost:5000
+- Health check: http://localhost:5000/api/health
+
+El servicio `migrate` aplica automáticamente las migraciones de `database/migrations/`
+antes de arrancar el backend.
+
+Crear una migración:
+
+```bash
+docker compose run --rm migrate npm run migrate:create -- nombre_de_la_migracion
+```
+
+Gestionarlas (después de editar el `.sql` generado):
+
+```bash
+docker compose run --rm migrate npm run migrate:up
+docker compose run --rm migrate npm run migrate:down
+docker compose run --rm migrate npm run migrate:redo
+docker compose run --rm migrate npm run migrate:status
+```
+
+Reset de la base (borra el volumen y el historial): `docker compose down -v`.
+
+Guía completa, variables, tests y solución de problemas: `docs/como-correr.md`.
+Migraciones y esquema: `database/README.md`.
 
 ## Decisiones técnicas y dudas abiertas
 
@@ -172,10 +202,10 @@ El estado refleja la documentación de arranque; cada responsable debe actualiza
 | Descripción y problema | Completa (borrador inicial) | A Definir |
 | Usuario y caso de uso | Completa (borrador inicial) | A Definir |
 | Alcance del MVP | Pendiente de validar | A Definir |
-| Arquitectura | Pendiente | A Definir |
-| Stack | Completa (primera opción) | A Definir |
+| Arquitectura | Base técnica implementada; módulos pendientes | A Definir |
+| Stack | Completa (Express/React/PostgreSQL) | A Definir |
 | Contrato de datos | Pendiente | A Definir |
-| Cómo correr | Pendiente | A Definir |
+| Cómo correr | Completa | A Definir |
 | Decisiones técnicas | Pendiente de resolver dudas | A Definir |
 | Plan de IA | Pendiente de selección/evaluación | A Definir |
 | Limitaciones | Completa (inicial; ampliar) | A Definir |

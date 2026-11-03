@@ -1,10 +1,18 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API de RepuSense (Express + PostgreSQL)",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"No hay pruebas automatizadas configuradas todavía\"",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "node --test test/*.test.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:up": "node scripts/migrate.js up",
+    "migrate:down": "node scripts/migrate.js down",
+    "migrate:redo": "node scripts/migrate.js redo",
+    "migrate:status": "node scripts/migrate.js status",
+    "migrate:create": "node scripts/migrate.js create",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -13,18 +21,24 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "devDependencies": {
-    "@types/node": "^26.6.5",
-    "@types/pg": "^8.23.1",
-    "prisma": "^7.10.1",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
+    "cors": "^2.8.6",
     "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }

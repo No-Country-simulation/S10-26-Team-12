@@ -1,0 +1,113 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: repusense_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-repusense_db}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-repusense_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Servicio único para migraciones: aplica las pendientes al arrancar y también
+  # se usa manualmente para crear o gestionar migraciones:
+  #   docker compose run --rm migrate npm run migrate:create -- nombre
+  #   docker compose run --rm migrate npm run migrate:status
+  migrate:
+    build: ./backend
+    image: repusense-backend:dev
+    container_name: repusense_migrate
+    restart: "no"
+    # El usuario node (uid 1000) crea los archivos en database/migrations para
+    # que pertenezcan al usuario local y se puedan editar sin sudo.
+    user: "node"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-repusense_db}
+      MIGRATIONS_DIR: /database/migrations
+      MIGRATION_VERBOSE: ${MIGRATION_VERBOSE:-false}
+    volumes:
+      # Con escritura para poder crear archivos de migración con `create`.
+      - ./database:/database
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run migrate:up
+
+  backend:
+    build: ./backend
+    image: repusense-backend:dev
+    container_name: repusense_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:${PORT:-5000}"
+    environment:
+      PORT: ${PORT:-5000}
+      NODE_ENV: ${NODE_ENV:-development}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-repusense_db}
+      JWT_SECRET: ${JWT_SECRET:-secretkey}
+      MIGRATIONS_DIR: /database/migrations
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./database:/database:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    command: npm run dev
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:${PORT:-5000}/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    container_name: repusense_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    depends_on:
+      - backend
+    command: npm run dev
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  postgres_data:
