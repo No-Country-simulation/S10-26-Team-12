@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id               Int    @id @default(autoincrement())
+  email            String @unique
+  passwordHash     String @map("password_hash")
+  nombre           String
+  leadsContactados Lead[] @relation("LeadContactadoPor")
+
+  @@map("usuarios")
+}
+
+enum EstadoLead {
+  nuevo
+  contactado
+  interesado
+  no_responde
+  ganado
+  perdido
+  descartado
+}
+
+model Lead {
+  id           Int        @id @default(autoincrement())
+  place_id     String     @unique
+  nombre       String
+  pais         String
+  ciudad       String
+  rubro        String
+  email        String?
+  telefono     String?
+  estado       EstadoLead @default(nuevo)
+  rating       Float
+  review_count Int
+
+  creado_en             DateTime  @default(now())
+  ultima_actualizacion  DateTime  @updatedAt
+  fecha_ultimo_contacto DateTime?
+
+  contactado_por    Int?
+  usuarioContactado Usuario? @relation("LeadContactadoPor", fields: [contactado_por], references: [id])
+
+  problema         String?
+  problema_resumen String?
+  hash_resenas     String?
+  resenas          Resena[]
+
+  asunto_mail    String?
+  contenido_mail String?
+
+
+  @@index([pais])
+  @@index([ciudad])
+  @@index([estado])
+  @@index([rubro])
+  @@index([rating])
+  @@map("leads")
+}
+
+model Busqueda {
+  id         Int    @id @default(autoincrement())
+  search_key String @unique
+  ciudad     String
+  pais       String
+  rubro      String
+
+  //representamos las coordenadas del rectangulo de la cuidad (geografico)
+  lat_min  Float
+  long_min Float
+  lat_max  Float
+  long_max Float
+
+  ultima_corrida DateTime?
+
+  @@index([pais, ciudad])
+  @@map("busquedas")
+}
+
+model Resena {
+  id        Int          @id @default(autoincrement())
+  lead_id   Int
+  lead      Lead         @relation(fields: [lead_id], references: [id])
+  texto     String
+  rating    Float
+  fecha     DateTime
+  autor     String?
+  creado_en DateTime     @default(now())
+  id_extern String
+  fuente    FuenteResena
+  @@unique([lead_id, id_extern])
+  @@index([lead_id, fecha])
+  @@map("resenas")
+}
+
+enum FuenteResena {
+  google_maps
+  yelp
+  tripadvisor
+}
