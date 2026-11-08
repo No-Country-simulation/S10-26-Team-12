@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "descripcion": "Contrato de datos de la API de RepuSense. Sale de backend/prisma/schema.prisma. Si cambia el schema, se actualiza este archivo.",
+  "enums": {
+    "EstadoLead": ["nuevo", "contactado", "interesado", "no_responde", "ganado", "perdido", "descartado"],
+    "FuenteResena": ["google_maps", "yelp", "tripadvisor"],
+    "Problema": ["atencion", "precios", "higiene", "demoras", "calidad", "otro"]
+  },
+  "Lead": {
+    "id": "integer",
+    "place_id": "string",
+    "nombre": "string",
+    "pais": "string",
+    "ciudad": "string",
+    "rubro": "string",
+    "email": "string|null",
+    "telefono": "string|null",
+    "estado": "EstadoLead",
+    "rating": "number",
+    "review_count": "integer",
+    "creado_en": "string (ISO 8601)",
+    "ultima_actualizacion": "string (ISO 8601)",
+    "fecha_ultimo_contacto": "string (ISO 8601)|null",
+    "contactado_por": "integer|null",
+    "problema": "Problema|null",
+    "problema_resumen": "string|null",
+    "asunto_mail": "string|null",
+    "contenido_mail": "string|null"
+  },
+  "Resena": {
+    "id": "integer",
+    "texto": "string",
+    "rating": "number",
+    "fecha": "string (ISO 8601)",
+    "autor": "string|null",
+    "fuente": "FuenteResena"
+  },
+  "LeadDetalle": {
+    "descripcion": "Todos los campos de Lead más la lista de reseñas negativas (hasta 5).",
+    "resenas": "Resena[]"
+  },
+  "Busqueda": {
+    "id": "integer",
+    "ciudad": "string",
+    "pais": "string",
+    "rubro": "string",
+    "ultima_corrida": "string (ISO 8601)|null",
+    "total_leads": "integer (calculado, no es una columna)"
+  },
+  "Interno": {
+    "descripcion": "Campos de la base que la API NO expone.",
+    "Lead": ["hash_resenas"],
+    "Resena": ["lead_id", "id_extern", "creado_en"],
+    "Busqueda": ["search_key", "lat_min", "long_min", "lat_max", "long_max"]
+  }
+}
