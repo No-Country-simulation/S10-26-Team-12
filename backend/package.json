@@ -16,7 +16,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:status": "prisma migrate status"
+    "db:status": "prisma migrate status",
+    "test:db": "tsx --test test/db/c2.db.test.ts"
   },
   "keywords": [],
   "author": "",
