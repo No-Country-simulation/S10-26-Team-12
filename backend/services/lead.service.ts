@@ -40,6 +40,9 @@ export async function guardarLead(
       ...datos,
     },
 
+    // Si el negocio ya existe, solo se actualizan estos campos.
+    // A propósito NO se tocan estado ni fecha_ultimo_contacto (ni contactado_por, email, telefono):
+    // si el vendedor ya marcó el lead como "contactado", volver a buscar no lo borra.
     update: {
       nombre: datos.nombre,
       pais: datos.pais,
@@ -50,16 +53,35 @@ export async function guardarLead(
     },
   });
 
-  // Guarda las reseñas. Las repetidas se ignoran.
+  // Guarda las reseñas: las nuevas se agregan y las que ya existían (mismo lead + id_extern)
+  // se actualizan con el texto y el rating más recientes.
   if (resenas.length > 0) {
-    await prisma.resena.createMany({
-      data: resenas.map((resena) => ({
-        ...resena,
-        fecha: new Date(resena.fecha),
-        lead_id: lead.id,
-      })),
-      skipDuplicates: true,
-    });
+    await prisma.$transaction(
+      resenas.map((resena) => {
+        const fecha = new Date(resena.fecha);
+
+        return prisma.resena.upsert({
+          where: {
+            lead_id_id_extern: {
+              lead_id: lead.id,
+              id_extern: resena.id_extern,
+            },
+          },
+          create: {
+            ...resena,
+            fecha,
+            lead_id: lead.id,
+          },
+          update: {
+            texto: resena.texto,
+            rating: resena.rating,
+            fecha,
+            autor: resena.autor ?? null,
+            fuente: resena.fuente,
+          },
+        });
+      }),
+    );
   }
 
   // Recupera las últimas reseñas negativas del negocio.
